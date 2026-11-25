@@ -35,8 +35,10 @@ class Ship {
 
   // 戦闘機の移動
   void move(int sx, int sy) {
-    // マウスとの距離がspeedX未満なら，マウスの位置に合わせる
-    // （これをしないと，1ずつずれたまま左右に行ったり来たりして震えてしまう）
+    // マウスとの距離が速度未満なら，マウスの位置に合わせる
+    // （これをしないと，マウスの位置を飛び越えて行ったり来たりして震えてしまう）
+
+    // x軸方向の移動
     if (abs(x - sx) < speedX) {
       x = sx;
     }
@@ -46,13 +48,16 @@ class Ship {
     else if (x < sx) {
       x = x + speedX;
     }
-    // y軸方向の移動は無効にしている（戦闘機は左右にだけ動く）
-    if (y > sy) {
+    // y軸方向の移動
+    if (abs(y - sy) < speedY) {
+      y = sy;
+    }
+    else if (y > sy) {
       y = y - speedY;
     }
-    if (y < sy) {
+    else if (y < sy) {
       y = y + speedY;
-    }    
+    }
   }
   
   // 戦闘機の表示
