@@ -13,6 +13,9 @@ class Ship {
   int shotType;       // レーザーの攻撃方法．0:通常，1:ダブル，2:3way，3:5way
   boolean canPress;   // レーザーを発射できるかどうか．Trueなら発射できる，Falseならできない．
   int timeCount = 0;  // 発射してからの経過フレーム数．interval以上になったら発射できるようにする
+  int homingInterval;      // ホーミングレーザーの発射間隔（フレーム数）
+  boolean canHoming;       // ホーミングレーザーを発射できるかどうか
+  int homingTimeCount = 0; // ホーミングレーザーを発射してからの経過フレーム数
 
   // コンストラクタ(データ作成時に1度だけ行う) 
   Ship() {
@@ -26,6 +29,8 @@ class Ship {
     interval = 30;  // レーザーの発射間隔．値が小さいほど連写できる
     shotType = 0; // レーザーの攻撃方法．
     canPress = true; // ゲーム開始直後から発射できるようにする
+    homingInterval = 45; // ホーミングレーザーは0.75秒に1回
+    canHoming = true;
   }
 
   // 戦闘機の移動

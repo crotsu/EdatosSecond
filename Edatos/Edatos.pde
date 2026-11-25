@@ -7,6 +7,7 @@ Starfield starfield;       // 背景の星
 Ship ship;                 // 戦闘機
 ArrayList<Enemy> enemies;  // 敵
 ArrayList<Laser> lasers;   // 戦闘機のレーザー
+ArrayList<HomingLaser> homingLasers; // 戦闘機のホーミングレーザー（hキーで発射）
 ArrayList<Bullet> bullets; // 敵の砲弾
 int score = 0;             // スコア
 
@@ -20,6 +21,7 @@ PImage bulletImg; // 敵の弾の画像
 //-------------------------------
 void setup() {
   size(400, 600);   // 画面サイズを400 x 600の長方形にする
+  pixelDensity(1);  // 高解像度画面でも1倍で描画する（Processingの新しい標準は2倍）
   imageMode(CENTER);// 画像座標の指定方法を中心に設定
 
   // 画像を読み込む
@@ -27,12 +29,31 @@ void setup() {
   laserImg  = loadImage("laser.png");
   bulletImg = loadImage("bullet.png");
 
-  // 各種インスタンスを生成
   starfield = new Starfield(100); // 背景の星の数を100にする
+  resetGame(); // 戦闘機・敵・弾・レーザー・スコアを初期状態にする
+}
+
+//------------------------------------------------------------
+// ゲームを初期状態にする（起動時と，再スタート時に実行する）
+//------------------------------------------------------------
+void resetGame() {
   ship = new Ship();
   enemies = new ArrayList<Enemy>();
   bullets = new ArrayList<Bullet>();
   lasers  = new ArrayList<Laser>();
+  homingLasers = new ArrayList<HomingLaser>();
+  score = 0;
+}
+
+//------------------------------------------------------------
+// マウスのボタンが押された瞬間に１度だけ実行される
+//------------------------------------------------------------
+void mousePressed() {
+  // ゲームオーバー中にクリックしたら，ゲームを再スタートする
+  if (ship.alive == false) {
+    resetGame();
+    ship.canPress = false; // 再スタートのクリックでレーザーが出ないようにする
+  }
 }
 
 //-------------------------------------------
@@ -103,7 +124,34 @@ void draw() {
       lasers.remove(i);
     }
   }
-   
+
+
+  // ホーミングレーザー発射（キーボードのhキー）
+  // 通常のレーザーとは別に，発射してからの経過フレーム数を数える
+  if (ship.canHoming == false) {
+    ship.homingTimeCount++;
+    if (ship.homingTimeCount >= ship.homingInterval) {
+      ship.canHoming = true;
+    }
+  }
+  if (keyPressed && (key=='h' || key=='H') && ship.alive==true) { // hキーが押され，かつ戦闘機が生きていたら
+    if (ship.canHoming == true) {
+      shootHoming(); // ホーミングレーザー発射
+      ship.canHoming = false;
+      ship.homingTimeCount = 0;
+    }
+  }
+
+
+  // ホーミングレーザーの動作
+  for (int i=homingLasers.size()-1; i>=0; i--) { // 削除があるので後ろから調べる
+    HomingLaser homing = homingLasers.get(i);
+    homing.display();
+    if (homing.isAlive()==false) { // 敵に当たったか，画面の外に出たか，寿命が来たら削除
+      homingLasers.remove(i);
+    }
+  }
+
     
   // 戦闘機の動作
   selectShottype(); // スコアによって攻撃タイプを選択
@@ -157,6 +205,15 @@ void shoot()
   }
 }
 
+// ホーミングレーザーを発射（機体の下へ扇状に4発出し，そこから敵へ向かう）
+void shootHoming()
+{
+  homingLasers.add(new HomingLaser(ship.x, ship.y, -4.0, 2.5));
+  homingLasers.add(new HomingLaser(ship.x, ship.y, -1.5, 4.0));
+  homingLasers.add(new HomingLaser(ship.x, ship.y,  1.5, 4.0));
+  homingLasers.add(new HomingLaser(ship.x, ship.y,  4.0, 2.5));
+}
+
 // スコア表示
 void displayScore(int score)
 {
@@ -179,5 +236,8 @@ void displayHP()
   }
   else {
     text("Game Over",width/2,height/2);
+    textSize(20);
+    fill(255);
+    text("Click to Restart",width/2,height/2+40);
   }
 }
