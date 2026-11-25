@@ -8,8 +8,10 @@ Ship ship;                 // 戦闘機
 ArrayList<Enemy> enemies;  // 敵
 ArrayList<Laser> lasers;   // 戦闘機のレーザー
 ArrayList<HomingLaser> homingLasers; // 戦闘機のホーミングレーザー（hキーで発射）
+ArrayList<Explosion> explosions;     // 敵を倒したときの爆発
 ArrayList<Bullet> bullets; // 敵の砲弾
 int score = 0;             // スコア
+boolean titleScreen = true; // オープニング画面を表示中かどうか．Trueならオープニング画面，Falseならゲーム中
 
 // 画像（loadImageはファイルを読むので時間がかかる．setupで1度だけ読み込んで使い回す）
 PImage enemyImg;  // 敵の画像
@@ -31,6 +33,7 @@ void setup() {
 
   starfield = new Starfield(100); // 背景の星の数を100にする
   resetGame(); // 戦闘機・敵・弾・レーザー・スコアを初期状態にする
+  startSound(); // 音を読み込んで，BGMを流し始める
 }
 
 //------------------------------------------------------------
@@ -42,6 +45,7 @@ void resetGame() {
   bullets = new ArrayList<Bullet>();
   lasers  = new ArrayList<Laser>();
   homingLasers = new ArrayList<HomingLaser>();
+  explosions = new ArrayList<Explosion>();
   score = 0;
 }
 
@@ -49,8 +53,14 @@ void resetGame() {
 // マウスのボタンが押された瞬間に１度だけ実行される
 //------------------------------------------------------------
 void mousePressed() {
+  // オープニング画面でクリックしたら，ゲームを開始する
+  if (titleScreen == true) {
+    titleScreen = false;
+    resetGame();
+    ship.canPress = false; // 開始のクリックでレーザーが出ないようにする
+  }
   // ゲームオーバー中にクリックしたら，ゲームを再スタートする
-  if (ship.alive == false) {
+  else if (ship.alive == false) {
     resetGame();
     ship.canPress = false; // 再スタートのクリックでレーザーが出ないようにする
   }
@@ -62,6 +72,12 @@ void mousePressed() {
 void draw() {
   background(0); // 画面クリアー（画面を黒を塗りつぶす）
   starfield.draw(); // 背景の星を描画する
+
+  // オープニング画面を表示中なら，ゲームの処理はせずにオープニング画面だけ描く
+  if (titleScreen == true) {
+    displayTitle();
+    return; // ここでdraw()を終わる（これより下のゲームの処理は行わない）
+  }
 
   // 敵の出現
   // 敵が1/60秒で2%の確率で，かつ敵の数が3未満のとき生成．つまり同時に3体しか出現しない
@@ -83,8 +99,23 @@ void draw() {
       }
     }
     else {
+      // 敵が倒されたときは（画面の外に出たときは除く），その場所で爆発させる
+      if (enemy.hp <= 0) {
+        explosions.add(new Explosion(enemy.x, enemy.y));
+        explosionSound.play(); // 爆発音を鳴らす
+      }
       // 敵が倒されたか画面の外に出たら，その敵をArrayListから削除
       enemies.remove(i);
+    }
+  }
+
+
+  // 爆発の動作
+  for (int i=explosions.size()-1; i>=0; i--) { // 削除があるので後ろから調べる
+    Explosion explosion = explosions.get(i);
+    explosion.display();
+    if (explosion.isAlive()==false) { // 爆発が終わったら削除
+      explosions.remove(i);
     }
   }
 
@@ -110,6 +141,7 @@ void draw() {
   if (mousePressed && ship.alive==true) { // マウスの左ボタンがクリックされ，かつ戦闘機が生きていたら
     if (ship.canPress == true) { // 発射できる状態なら
       shoot(); // レーザー発射
+      shotSound.play(); // 発射音を鳴らす
       ship.canPress = false; // 発射できないようにする
       ship.timeCount = 0;    // 発射した時点から数え直す（これで連打しても発射間隔が守られる）
     }
@@ -137,6 +169,7 @@ void draw() {
   if (keyPressed && (key=='h' || key=='H') && ship.alive==true) { // hキーが押され，かつ戦闘機が生きていたら
     if (ship.canHoming == true) {
       shootHoming(); // ホーミングレーザー発射
+      homingSound.play(); // 発射音を鳴らす
       ship.canHoming = false;
       ship.homingTimeCount = 0;
     }
@@ -240,4 +273,56 @@ void displayHP()
     fill(255);
     text("Click to Restart",width/2,height/2+40);
   }
+}
+
+// オープニング画面の表示
+void displayTitle()
+{
+  pushStyle(); // 文字の大きさや色の設定を，描き終わったら元に戻すため保存しておく
+  textAlign(CENTER, CENTER);
+
+  // タイトル文字：青い光を少しずつずらして何度も重ねて描き，その上に白い文字を描く
+  textSize(56);
+  blendMode(ADD); // 色を足し合わせて描く．重なったところが明るくなり，光って見える
+  fill(40, 120, 255, 40);
+  for (int dx=-4; dx<=4; dx+=2) {
+    for (int dy=-4; dy<=4; dy+=2) {
+      text("EDATOS", width/2+dx, 150+dy);
+    }
+  }
+  blendMode(BLEND); // 普通の描き方に戻す
+  fill(255);
+  text("EDATOS", width/2, 150);
+
+  // サブタイトル
+  textSize(28);
+  fill(120, 230, 255);
+  text("SECOND", width/2, 205);
+
+  // 戦闘機：sinを使って上下にゆっくり揺らす
+  float floatY = 320 + 8 * sin(frameCount * 0.05);
+  image(ship.img, width/2, floatY);
+
+  // 操作説明：「:」の位置をそろえるため，左側は右寄せ，右側は左寄せで描く
+  textSize(16);
+  fill(200);
+  String[] actions = {"MOVE", "SHOT", "HOMING"};
+  String[] keys    = {"MOUSE", "CLICK", "H KEY"};
+  for (int i=0; i<actions.length; i++) {
+    float y = 420 + i * 25;
+    textAlign(RIGHT, CENTER);
+    text(actions[i], width/2 - 12, y);
+    textAlign(CENTER, CENTER);
+    text(":", width/2, y);
+    textAlign(LEFT, CENTER);
+    text(keys[i], width/2 + 12, y);
+  }
+  textAlign(CENTER, CENTER);
+
+  // 「CLICK TO START」：sinを使って明るさを変え，点滅させる
+  textSize(22);
+  fill(#FAE753, 155 + 100 * sin(frameCount * 0.1));
+  text("CLICK TO START", width/2, 540);
+
+  popStyle(); // 保存しておいた設定に戻す
 }
