@@ -10,12 +10,22 @@ ArrayList<Laser> lasers;   // 戦闘機のレーザー
 ArrayList<Bullet> bullets; // 敵の砲弾
 int score = 0;             // スコア
 
+// 画像（loadImageはファイルを読むので時間がかかる．setupで1度だけ読み込んで使い回す）
+PImage enemyImg;  // 敵の画像
+PImage laserImg;  // レーザーの画像
+PImage bulletImg; // 敵の弾の画像
+
 //-------------------------------
 // ゲーム起動時に１度だけ実行する
 //-------------------------------
 void setup() {
   size(400, 600);   // 画面サイズを400 x 600の長方形にする
   imageMode(CENTER);// 画像座標の指定方法を中心に設定
+
+  // 画像を読み込む
+  enemyImg  = loadImage("enemy_red.png");
+  laserImg  = loadImage("laser.png");
+  bulletImg = loadImage("bullet.png");
 
   // 各種インスタンスを生成
   starfield = new Starfield(100); // 背景の星の数を100にする
@@ -40,32 +50,36 @@ void draw() {
   
   
   // 敵の動作
-  for (int i=0; i<enemies.size(); i++) {
+  // ArrayListから要素を削除するときは，後ろから順番に調べる．
+  // 前から調べると，削除した後ろの要素が1つ前に詰められて，次の要素を調べ忘れてしまうため．
+  for (int i=enemies.size()-1; i>=0; i--) {
     Enemy enemy = enemies.get(i); // ArrayListから既に生成した敵を取得する
     enemy.display(); // 敵画像を表示
-    // 敵が画面の外に出たら，その敵をArrayListから削除
-    if (enemy.isAlive()==false) {
+    if (enemy.isAlive()==true) {
+      // 生きている敵だけが弾を発射．1/60秒で3%の確率
+      if (random(1) < 0.03) {
+        bullets.add(new Bullet(enemy.x, enemy.y));
+      }
+    }
+    else {
+      // 敵が倒されたか画面の外に出たら，その敵をArrayListから削除
       enemies.remove(i);
     }
-    // 敵が弾を発射．1/60秒で3%の確率
-    if (random(1) < 0.03) {
-      bullets.add(new Bullet(enemy.x, enemy.y));
-    } 
   }
-  
-  
+
+
   // 敵の弾の動作
-  for (int i=0; i<bullets.size(); i++) {
+  for (int i=bullets.size()-1; i>=0; i--) { // 削除があるので後ろから調べる
     Bullet bullet = bullets.get(i); // ArrayListから既に生成した弾を取得する
     bullet.display(); // 弾画像を表示
-    if (bullet.isAlive()==false) { // 弾が画面の外に出たら，その弾をArrayListから削除
+    if (bullet.isAlive()==false) { // 弾が戦闘機に当たったか画面の外に出たら，その弾をArrayListから削除
       bullets.remove(i);
     }
   }
   
   
   // 戦闘機のレーザー発射
-  if(mousePressed) { // マウスの左ボタンがクリックされたら
+  if (mousePressed && ship.alive==true) { // マウスの左ボタンがクリックされ，かつ戦闘機が生きていたら
     if (ship.canPress == true) { // 発射できる状態なら    
       shoot(); // レーザー発射
     }
@@ -79,10 +93,10 @@ void draw() {
   
   
   // 戦闘機のレーザーの動作
-  for (int i=0; i<lasers.size(); i++) {
+  for (int i=lasers.size()-1; i>=0; i--) { // 削除があるので後ろから調べる
     Laser laser = lasers.get(i); // ArrayListから既に生成したレーザーを取得する
     laser.display(); // レーザー画像を表示
-    if (laser.isAlive()==false) { // レーザーが画面の外に出たら，そのレーザーをArrayListから削除
+    if (laser.isAlive()==false) { // レーザーが敵に当たったか画面の外に出たら，そのレーザーをArrayListから削除
       lasers.remove(i);
     }
   }
@@ -90,8 +104,7 @@ void draw() {
     
   // 戦闘機の動作
   selectShottype(); // スコアによって攻撃タイプを選択
-  ship.isAlive(); // 戦闘機のHPが0より大きければ生存
-  if (ship.alive) {
+  if (ship.isAlive()==true) { // 戦闘機のHPが0より大きければ生存
     ship.display(mouseX, mouseY); // ウィンドウ内のマウスカーソルの座標を取得して，戦闘機を動かす
   }
     

@@ -9,10 +9,10 @@ class Ship {
   int x, y;           // 戦闘機のxy座標
   int speedX, speedY; // 戦闘機のx,y軸方向の移動速度
   boolean alive;      // 戦闘機が生きているかどうか. Trueが生存，Falseが死亡．
-  int interval;         // レーザーの発射間隔．値が小さいほど連写できる
-  int shotType;       // レーザーの攻撃方法．0:通常，1:ダブル，2:3way，3:4way
+  int interval;       // レーザーの発射間隔．値が小さいほど連写できる
+  int shotType;       // レーザーの攻撃方法．0:通常，1:ダブル，2:3way，3:5way
   boolean canPress;   // レーザーを発射できるかどうか．Trueなら発射できる，Falseならできない．
-  int timeCount = 0;  // レーザーの発射回数に応じて，発射できるかどうかを判定
+  int timeCount = 0;  // 経過フレーム数．interval以上になったら発射できるようにする
 
   // コンストラクタ(データ作成時に1度だけ行う) 
   Ship() {
@@ -25,16 +25,23 @@ class Ship {
     speedY = 2;   
     interval = 30;  // レーザーの発射間隔．値が小さいほど連写できる
     shotType = 0; // レーザーの攻撃方法．
+    canPress = true; // ゲーム開始直後から発射できるようにする
   }
-  
+
   // 戦闘機の移動
   void move(int sx, int sy) {
-    if (x > sx) {
+    // マウスとの距離がspeedX未満なら，マウスの位置に合わせる
+    // （これをしないと，1ずつずれたまま左右に行ったり来たりして震えてしまう）
+    if (abs(x - sx) < speedX) {
+      x = sx;
+    }
+    else if (x > sx) {
       x = x - speedX;
     }
-    if (x < sx) {
+    else if (x < sx) {
       x = x + speedX;
     }
+    // y軸方向の移動は無効にしている（戦闘機は左右にだけ動く）
     if (y > sy) {
       //y = y - speedY;
     }
@@ -51,8 +58,7 @@ class Ship {
   
   // 戦闘機が倒されたかどうかチェック
   boolean isAlive() {
-    boolean alive = true;
-    // 戦闘機のHPが0なら
+    // 戦闘機のHPが0以下なら
     if (hp<=0) {
       alive = false;
       x = -999;

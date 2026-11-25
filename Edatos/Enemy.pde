@@ -11,7 +11,7 @@ class Enemy {
 
   // コンストラクタ(データ作成時に1度だけ行う) 
   Enemy() {
-    img = loadImage("enemy_red.png");
+    img = enemyImg; // setupで読み込んだ画像を使う
     alive = true;
     hp = 300;
     x = (int)random(width+1);  // 敵の出現のx座標をランダム．0からwidthまで．つまり画面の端から端まで．
@@ -34,13 +34,14 @@ class Enemy {
   
   // 敵がウィンドウの外に出たかどうかチェック
   boolean isAlive() {
-    boolean alive = true;
-    if (x<0-50 || x>width+50 || y<0-50 || y>height+50) { // // 画面外に完全に出るのを待つため範囲を50広げる
+    if (x<0-50 || x>width+50 || y<0-50 || y>height+50) { // 画面外に完全に出るのを待つため範囲を50広げる
       alive = false;
     }
-    // 敵を倒したら，点数を与える
-    if (hp<0) {
-      score = score + 100;
+    // 敵を倒したら（HPが0以下になったら），点数を与える
+    if (hp<=0) {
+      if (ship.alive==true) { // ゲームオーバー後は点数を与えない
+        score = score + 100;
+      }
       alive = false;
     }
     return alive;
