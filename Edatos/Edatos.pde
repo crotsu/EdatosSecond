@@ -79,16 +79,19 @@ void draw() {
   
   
   // 戦闘機のレーザー発射
-  if (mousePressed && ship.alive==true) { // マウスの左ボタンがクリックされ，かつ戦闘機が生きていたら
-    if (ship.canPress == true) { // 発射できる状態なら    
-      shoot(); // レーザー発射
+  // 発射してからの経過フレーム数を数え，ship.intervalになったら再び発射できるようにする
+  if (ship.canPress == false) {
+    ship.timeCount++; // 1/60秒で1回カウントされる
+    if (ship.timeCount >= ship.interval) {
+      ship.canPress = true;
     }
-    ship.canPress = false; // 発射できないようする
   }
-  ship.timeCount++; // 1/60秒で1回カウントされる
-  if (ship.timeCount >= ship.interval) { // ship.intervalになったら発射できるようにする
-    ship.canPress = true;
-    ship.timeCount = 0; // 0にリセット
+  if (mousePressed && ship.alive==true) { // マウスの左ボタンがクリックされ，かつ戦闘機が生きていたら
+    if (ship.canPress == true) { // 発射できる状態なら
+      shoot(); // レーザー発射
+      ship.canPress = false; // 発射できないようにする
+      ship.timeCount = 0;    // 発射した時点から数え直す（これで連打しても発射間隔が守られる）
+    }
   }
   
   

@@ -12,7 +12,7 @@ class Ship {
   int interval;       // レーザーの発射間隔．値が小さいほど連写できる
   int shotType;       // レーザーの攻撃方法．0:通常，1:ダブル，2:3way，3:5way
   boolean canPress;   // レーザーを発射できるかどうか．Trueなら発射できる，Falseならできない．
-  int timeCount = 0;  // 経過フレーム数．interval以上になったら発射できるようにする
+  int timeCount = 0;  // 発射してからの経過フレーム数．interval以上になったら発射できるようにする
 
   // コンストラクタ(データ作成時に1度だけ行う) 
   Ship() {
