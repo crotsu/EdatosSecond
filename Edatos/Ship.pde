@@ -21,12 +21,12 @@ class Ship {
   Ship() {
     img = loadImage("ship.png");
     alive = true;
-    maxHp = hp = 300;
+    maxHp = hp = 30000;
     x = width/2;     // 戦闘機の初期出現位置．x軸方向は真ん中
     y = 4*height/5;  // 戦闘機の初期出現位置．y軸方向は上からから4/5のところ
-    speedX = 2;   
-    speedY = 2;   
-    interval = 30;  // レーザーの発射間隔．値が小さいほど連写できる
+    speedX = 20;   
+    speedY = 20;   
+    interval = 10;  // レーザーの発射間隔．値が小さいほど連写できる
     shotType = 0; // レーザーの攻撃方法．
     canPress = true; // ゲーム開始直後から発射できるようにする
     homingInterval = 45; // ホーミングレーザーは0.75秒に1回
@@ -48,10 +48,10 @@ class Ship {
     }
     // y軸方向の移動は無効にしている（戦闘機は左右にだけ動く）
     if (y > sy) {
-      //y = y - speedY;
+      y = y - speedY;
     }
     if (y < sy) {
-      //y = y + speedY;
+      y = y + speedY;
     }    
   }
   
