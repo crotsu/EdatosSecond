@@ -72,7 +72,7 @@ void draw() {
     ship.canPress = false; // 発射できないようする
   }
   ship.timeCount++; // 1/60秒で1回カウントされる
-  if (ship.timeCount >= ship.rappid) { // ship.rappidになったら発射できるようにする
+  if (ship.timeCount >= ship.interval) { // ship.intervalになったら発射できるようにする
     ship.canPress = true;
     ship.timeCount = 0; // 0にリセット
   }
